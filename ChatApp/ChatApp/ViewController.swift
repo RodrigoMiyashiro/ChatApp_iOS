@@ -30,6 +30,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
 
+        // Retrieve messages from Parse
+        self.retrieveMessages()
         
         // Set Delegate and DataSource from TableView (messageTableView)
         self.messageTableView.delegate = self
@@ -61,7 +63,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         let CellIdentifier = "MessageCell"
         let cell = self.messageTableView.dequeueReusableCellWithIdentifier(CellIdentifier, forIndexPath: indexPath) 
         
-        cell.textLabel?.text = "ABC"
+        cell.textLabel?.text = self.messagesArray[indexPath.row]
         
         return cell
         
@@ -129,16 +131,51 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         newMessageObject.saveInBackgroundWithBlock { (success: Bool, error: NSError?) -> Void in
             if (success) {
                 // The object has been saved.
-                // TODO: Retrieve the latest messages and reload the table
+                //Retrieve the latest messages and reload the table
+                self.retrieveMessages()
                 
             } else {
                 // There was a problem, check error.description
                 print("Error: ", error?.description)
             }
             
-            // Enable the textField and send Button
-            self.sendBtn.enabled = true
-            self.messageTextField.enabled = true
+            dispatch_async(dispatch_get_main_queue()) {
+                // Enable the textField and send Button
+                self.sendBtn.enabled = true
+                self.messageTextField.enabled = true
+            }
+        }
+    }
+    
+    
+    // MARK: - Others Methods
+    func retrieveMessages () {
+        
+        // Create a new PFQuery
+        let query: PFQuery = PFQuery(className: "Message")
+        
+        // Call findObjectsInBackground
+        query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
+            
+            // Clear the messageArray
+            self.messagesArray = [String]()
+            
+            // Loop through the objects array
+            for messageObjects in objects! {
+                
+                // Retrieve the Text column value of each PFObjects
+                let messageText = (messageObjects as PFObject)["Text"] as? String
+                
+                // Assign it into on messageArray
+                if messageText != nil {
+                    self.messagesArray.append(messageText!)
+                }
+            }
+            
+            dispatch_async(dispatch_get_main_queue()) {
+                // Reload the tableView
+                self.messageTableView.reloadData()
+            }
         }
     }
     
