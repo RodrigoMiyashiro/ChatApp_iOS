@@ -107,7 +107,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
 
     
-    // MARK - IBAction's Methods
+    // MARK: - IBAction's Methods
     @IBAction func sendBtnTapped(sender: AnyObject) {
         
         // Send button is tapped
@@ -115,6 +115,31 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         // Call the end editing method for the textField
         self.messageTextField.endEditing(true)
         
+        // Disable the send button and textField
+        self.messageTextField.enabled = false
+        self.sendBtn.enabled = false
+        
+        // Create a PFObject
+        let newMessageObject: PFObject = PFObject(className: "Message")
+
+        // Set the Text key to the  text of tge messageTextField
+        newMessageObject["Text"] = self.messageTextField.text
+        
+        // Save the PFObject
+        newMessageObject.saveInBackgroundWithBlock { (success: Bool, error: NSError?) -> Void in
+            if (success) {
+                // The object has been saved.
+                // TODO: Retrieve the latest messages and reload the table
+                
+            } else {
+                // There was a problem, check error.description
+                print("Error: ", error?.description)
+            }
+            
+            // Enable the textField and send Button
+            self.sendBtn.enabled = true
+            self.messageTextField.enabled = true
+        }
     }
     
 }
